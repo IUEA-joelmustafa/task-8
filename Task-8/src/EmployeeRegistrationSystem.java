@@ -84,8 +84,51 @@ public class EmployeeRegistrationSystem {
         frame.add(treePanel, BorderLayout.WEST);
         frame.add(buttonPanel, BorderLayout.SOUTH);
 
+        // ===== BUTTON LOGIC =====
+
+        submitBtn.addActionListener(e -> handleSubmit());
+        clearBtn.addActionListener(e -> clearForm());
 
         frame.setVisible(true);
+    }
+
+    private void handleSubmit() {
+        String name = nameField.getText();
+        String email = emailField.getText();
+        String password = new String(passwordField.getPassword());
+        String department = (String) departmentBox.getSelectedItem();
+        Date dob = calendar.getDate();
+
+        // Validation
+        if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "Please fill all fields!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Hide password
+        String hiddenPassword = "******";
+
+        // Selected Tree Node
+        Object selectedNode = tree.getLastSelectedPathComponent();
+        String org = (selectedNode != null) ? selectedNode.toString() : "Not selected";
+
+        // Summary
+        String message = "Registration Successful!\n\n"
+                + "Name: " + name + "\n"
+                + "Email: " + email + "\n"
+                + "Password: " + hiddenPassword + "\n"
+                + "Department: " + department + "\n"
+                + "DOB: " + dob + "\n"
+                + "Organization: " + org;
+
+        JOptionPane.showMessageDialog(frame, message);
+    }
+
+    private void clearForm() {
+        nameField.setText("");
+        emailField.setText("");
+        passwordField.setText("");
+        departmentBox.setSelectedIndex(0);
     }
 
     public static void main(String[] args) {
