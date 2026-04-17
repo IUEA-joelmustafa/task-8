@@ -1,0 +1,82 @@
+pipeline {
+
+    agent { label 'java-build-agent' }
+
+    environment {
+        APP_NAME       = 'task-8'
+        SONAR_HOST_URL = 'http://localhost:9000'
+        SONAR_TOKEN    = credentials('sonarqube-token')
+    }
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        timestamps()
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo 'Checking out code from GitHub...'
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Compiling Employee Registration System...'
+                bat 'cd Task-8 && mvn clean compile -B'
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                echo 'Running JUnit tests...'
+                bat 'cd Task-8 && mvn test -B'
+            }
+            post {
+                always {
+                    junit 'Task-8/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Code Quality - SonarQube') {
+            steps {
+                echo 'Running SonarQube analysis...'
+                bat "cd Task-8 && mvn sonar:sonar -Dsonar.projectKey=%APP_NAME% -Dsonar.host.url=%SONAR_HOST_URL% -Dsonar.login=%SONAR_TOKEN% -B"
+            }
+            post {
+                success {
+                    echo 'SonarQube analysis complete! View at http://localhost:9000'
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                echo 'Packaging into JAR...'
+                bat 'cd Task-8 && mvn package -DskipTests -B'
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'Task-8/target/*.jar',
+                                     fingerprint: true
+                }
+            }
+        }
+
+    }
+
+    post {
+        always {
+            echo "Pipeline finished. Status: ${currentBuild.currentResult}"
+        }
+        success {
+            echo "BUILD PASSED - ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        }
+        failure {
+            echo "BUILD FAILED - ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+        }
+    }
+}
